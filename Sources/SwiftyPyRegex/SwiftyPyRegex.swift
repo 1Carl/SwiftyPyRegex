@@ -109,6 +109,10 @@ public class re {
     return re.compile(pattern, flags: flags).sub(repl, string, count)
   }
 
+  public static func sub(_ pattern: String, _ replfunc: (String) -> String, _ string: String, _ count: Int = 0, flags: RegexObject.Flag = []) -> String {
+    return re.compile(pattern, flags: flags).sub(replfunc, string, count)
+  }
+
   /**
   Perform the same operation as sub(), but return a tuple (new_string, number_of_subs_made) as (String, Int)
   
@@ -313,6 +317,10 @@ public class re {
       return subn(repl, string, count).0
     }
 
+    public func sub(_ replfunc: (String) -> String, _ string: String, _ count: Int = 0) -> String {
+      return subn(replfunc, string, count).0
+    }
+
     /**
     Identical to the re.subn() function, using the compiled pattern.
     
@@ -324,6 +332,32 @@ public class re {
     
     - returns: a tuple (new_string, number_of_subs_made) as (String, Int)
     */
+    public func subn(_ replfunc: (String) -> String, _ string: String, _ count: Int = 0) -> (String, Int) {
+      guard let regex = regex else {
+        return (string, 0)
+      }
+
+      let range = NSRange(location: 0, length: string.utf16.count)
+      let mutable = NSMutableString(string: string)
+      let maxCount = count == 0 ? Int.max : (count > 0 ? count : 0)
+      var n = 0
+      var offset = 0
+      regex.enumerateMatches(in: string, options: [], range: range) { result, _, stop in
+        if maxCount <= n {
+          stop.pointee = true
+          return
+        }
+        if let result = result {
+          n += 1
+          let resultRange = NSRange(location: result.range.location + offset, length: result.range.length)
+          let lengthBeforeReplace = mutable.length
+          regex.replaceMatches(in: mutable, options: [], range: resultRange, withTemplate: replfunc(mutable.substring(with: resultRange)))
+          offset += mutable.length - lengthBeforeReplace
+        }
+      }
+      return (mutable as String, n)
+    } 
+
     public func subn(_ repl: String, _ string: String, _ count: Int = 0) -> (String, Int) {
       guard let regex = regex else {
         return (string, 0)
