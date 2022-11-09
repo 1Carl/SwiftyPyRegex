@@ -109,7 +109,7 @@ public class re {
     return re.compile(pattern, flags: flags).sub(repl, string, count)
   }
 
-  public static func sub(_ pattern: String, _ replfunc: (String) -> String, _ string: String, _ count: Int = 0, flags: RegexObject.Flag = []) -> String {
+  public static func sub(_ pattern: String, _ replfunc: (re.MatchObject) -> String, _ string: String, _ count: Int = 0, flags: RegexObject.Flag = []) -> String {
     return re.compile(pattern, flags: flags).sub(replfunc, string, count)
   }
 
@@ -317,7 +317,7 @@ public class re {
       return subn(repl, string, count).0
     }
 
-    public func sub(_ replfunc: (String) -> String, _ string: String, _ count: Int = 0) -> String {
+    public func sub(_ replfunc: (re.MatchObject) -> String, _ string: String, _ count: Int = 0) -> String {
       return subn(replfunc, string, count).0
     }
 
@@ -332,7 +332,7 @@ public class re {
     
     - returns: a tuple (new_string, number_of_subs_made) as (String, Int)
     */
-    public func subn(_ replfunc: (String) -> String, _ string: String, _ count: Int = 0) -> (String, Int) {
+    public func subn(_ replfunc: (re.MatchObject) -> String, _ string: String, _ count: Int = 0) -> (String, Int) {
       guard let regex = regex else {
         return (string, 0)
       }
@@ -351,7 +351,8 @@ public class re {
           n += 1
           let resultRange = NSRange(location: result.range.location + offset, length: result.range.length)
           let lengthBeforeReplace = mutable.length
-          regex.replaceMatches(in: mutable, options: [], range: resultRange, withTemplate: replfunc(mutable.substring(with: resultRange)))
+          let matchobj = MatchObject(string: string, match: result)
+          regex.replaceMatches(in: mutable, options: [], range: resultRange, withTemplate: replfunc(matchobj))
           offset += mutable.length - lengthBeforeReplace
         }
       }
